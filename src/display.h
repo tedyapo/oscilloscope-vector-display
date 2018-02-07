@@ -23,12 +23,14 @@ typedef struct
   uint32_t sample_rate;
   float frame_rate;
   float slew;
+  int ac_coupling;
 
   /* system vars */
   pthread_t thread;
   pthread_mutex_t update_mutex;
   display_buffer buffer[2];
   int active_idx;
+  float sumx, sumy;
   struct timespec next_frame_time;
   int swap_flag;
   snd_pcm_t *pcm_handle;

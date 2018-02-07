@@ -12,6 +12,7 @@ int main()
   display_params.frame_rate = 60;
   display_params.sample_rate = 48000;
   display_params.slew = 10;
+  display_params.ac_coupling = 0;
 
   InitDisplay(&display_params);
 

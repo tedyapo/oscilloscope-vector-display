@@ -116,6 +116,8 @@ void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limi
       for (int i=0; i < n_pts; ++i){
         float x = oldx + (p->x - oldx)*((float)i)/n_pts;
         float y = oldy + (p->y - oldy)*((float)i)/n_pts;
+        display_params->sumx += x;
+        display_params->sumy += y;
         display_params->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(x, -1., 1.);
         display_params->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(y, -1., 1.);
         idx++;
@@ -131,6 +133,33 @@ void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limi
       oldx = p->x;
       oldy = p->y;
       p = p->next;
+    }
+  }
+  
+  if (display_params->ac_coupling){
+    float dx, dy;
+    if (fabsf(display_params->sumx) > fabs(display_params->sumy)){
+      dx = copysign(1.f, display_params->sumx);
+      dy = copysign(fabs(display_params->sumy/display_params->sumx), display_params->sumy);
+    } else {
+      dx = copysign(fabs(display_params->sumx/display_params->sumy), display_params->sumx);
+      dy = copysign(1.f, display_params->sumy);
+    }
+    int n_pts = floor(MAX(fabsf(display_params->sumx), fabsf(display_params->sumy)));
+    for (int i = 0; i < n_pts; ++i){
+      display_params->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(-dx, -1., 1.);
+      display_params->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(-dy, -1., 1.);
+      idx++;
+      if (2*idx > display_params->buffer[buf_idx].buffer_len){
+        display_params->buffer[buf_idx].buffer_len *= 2;
+        display_params->buffer[buf_idx].buffer = (int16_t*) realloc(display_params->buffer[buf_idx].buffer,
+                                                                    2*display_params->buffer[buf_idx].buffer_len);
+        if (!display_params->buffer[buf_idx].buffer){
+          ERROR("realloc() failed");
+        }
+      }
+      display_params->sumx -= dx;
+      display_params->sumy -= dy;
     }
   }
 
@@ -173,6 +202,9 @@ void InitDisplay(display_params_t *display_params)
   }
   display_params->active_idx = 0;
   display_params->swap_flag = 0;
+
+  display_params->sumx = 0.f;
+  display_params->sumy = 0.f;
 
   clock_gettime(CLOCK_REALTIME, &display_params->next_frame_time);
 
