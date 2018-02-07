@@ -11,32 +11,31 @@ int main()
 
   display_params.frame_rate = 60;
   display_params.sample_rate = 48000;
+  display_params.slew = 10;
 
   InitDisplay(&display_params);
 
-  float a = 1.;
+  float t = 0.f;
   while(1){
-    usleep(100000);
     DisplayList list;
     InitDisplayList(&list);
     Line *l = NewLine();
-    int N = 100;
-    float pi = 3.141592653;
+    int N = 20;
+    const float pi = 3.141592653;
+    float a = 0.5+0.25*cos(2*pi*t*13);
+    float cx = cos(2*pi*t);
+    float cy = sin(2*pi*t);
     for (int i = 0; i<N; ++i){
-      float x = a*cos(2.*pi*i/N);
-      float y = a*sin(2.*pi*i/N);
+      float x = cx + a*cos(2.*pi*i/N);
+      float y = cy + a*sin(2.*pi*i/N);
       Point *p = NewPoint(x, y);
       AddPoint(l, p);
     }
-    a *= 0.99;
-/*
-    Point *p0 = NewPoint(-1, -1);
-    Point *p1 = NewPoint(-1,  1);
-    AddPoint(l, p0);
-    AddPoint(l, p1);
-*/
+    t += 0.001;
+
     AddLine(&list, l);
-    UpdateDisplay(&display_params, &list);
+    fprintf(stderr, "u");
+    UpdateDisplay(&display_params, &list, 1);
     FreeDisplayList(&list);
   }
 
