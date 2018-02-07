@@ -5,24 +5,38 @@
 #define DISPLAY_H_INCLUDED_
 
 #include <stdint.h>
+#include <time.h>
 #include <alsa/asoundlib.h>
 #include "display_list.h"
 
 typedef struct
 {
+  int16_t *buffer;
+  uint32_t buffer_len;
+  uint32_t data_len;
+} display_buffer;
+  
+typedef struct
+{
+  /* user parameters */
+  char *pcm_device;
+  uint32_t sample_rate;
+  float frame_rate;
+  float slew;
+
+  /* system vars */
   pthread_t thread;
   pthread_mutex_t update_mutex;
-  int16_t *frame_data;
-  uint32_t frame_len;
-  float frame_rate;
-  uint32_t sample_rate;
-  char *pcm_device;
+  display_buffer buffer[2];
+  int active_idx;
+  struct timespec next_frame_time;
+  int swap_flag;
   snd_pcm_t *pcm_handle;
 } display_params_t;
 
 void *display_loop(void *p);
 void InitDisplay(display_params_t *display_params);
-void UpdateDisplay(display_params_t *display_params, DisplayList *list);
+void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limit_fps);
 void CloseDisplay(display_params_t *display_params);
 
 #endif /* #ifndef DISPLAY_H_INCLUDED_ */
