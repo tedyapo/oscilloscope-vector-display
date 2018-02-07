@@ -1,2 +1,15 @@
 # oscillosope-vector-display
 Experimental vector display on oscilloscope using soundcard audio output
+
+__Building__
+
+Install ALSA development package
+
+sudo apt-get install asound2-dev
+
+git clone https://github.com/tedyapo/oscillosope-vector-display.git
+
+cd oscillosope-vector-display
+cd src
+make
+./test
