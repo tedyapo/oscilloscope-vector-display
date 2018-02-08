@@ -38,7 +38,8 @@ typedef struct
 
 void *display_loop(void *p);
 void InitDisplay(display_params_t *display_params);
-void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limit_fps);
+void UpdateDisplay(display_params_t *display_params, DisplayList *list,
+                   int limit_fps);
 void CloseDisplay(display_params_t *display_params);
 
 #endif /* #ifndef DISPLAY_H_INCLUDED_ */
