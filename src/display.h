@@ -26,6 +26,8 @@ typedef struct
   int ac_coupling;
 
   /* system vars */
+  uint32_t total_frames;
+  struct timespec start_time;
   pthread_t thread;
   pthread_mutex_t update_mutex;
   display_buffer buffer[2];
@@ -41,5 +43,6 @@ void InitDisplay(display_params_t *display_params);
 void UpdateDisplay(display_params_t *display_params, DisplayList *list,
                    int limit_fps);
 void CloseDisplay(display_params_t *display_params);
+float GetDisplayFPS(display_params_t *display_params);
 
 #endif /* #ifndef DISPLAY_H_INCLUDED_ */

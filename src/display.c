@@ -26,7 +26,7 @@ void* display_loop(void *p)
   }
 
   while(1){
-    fprintf(stderr, ".");
+    dp->total_frames++;
 
     pthread_mutex_lock(&dp->update_mutex);
     if (dp->swap_flag){
@@ -36,18 +36,22 @@ void* display_loop(void *p)
     pthread_mutex_unlock(&dp->update_mutex);
 
     /* called frames in ALSA, but samples here to avoid confusion */
-    snd_pcm_sframes_t samples;
-    samples = snd_pcm_writei(dp->pcm_handle,
-                             dp->buffer[dp->active_idx].buffer,
-                             dp->buffer[dp->active_idx].data_len);
-    if (samples < 0){
-      samples = snd_pcm_recover(dp->pcm_handle, samples, 0);
+    int16_t *ptr = dp->buffer[dp->active_idx].buffer;
+    uint32_t sample_count = dp->buffer[dp->active_idx].data_len;
+    while(1){
+      snd_pcm_sframes_t samples;
+      samples = snd_pcm_writei(dp->pcm_handle, ptr, sample_count);
       if (samples < 0){
-        ERROR("snd_pcm_writei() failed");
+        samples = snd_pcm_recover(dp->pcm_handle, samples, 0);
+        if (samples < 0){
+          ERROR("snd_pcm_writei() failed");
+        }
       }
-    }
-    if (samples > 0 && samples < dp->buffer[dp->active_idx].data_len){
-      ERROR("short write in snd_pcm_writei()");
+      ptr += 2*samples;
+      sample_count -= samples;
+      if (0 == sample_count){
+        break;
+      }
     }
 
     if (snd_pcm_state(dp->pcm_handle) != SND_PCM_STATE_RUNNING){
@@ -71,6 +75,7 @@ void* display_loop(void *p)
 
 void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
 {
+  /* sleep when required to maintain a constant frame update rate */
   if (limit_fps){
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
@@ -105,6 +110,7 @@ void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
   int buf_idx = dp->active_idx;
   pthread_mutex_unlock(&dp->update_mutex);
 
+  /* render line segments to audio samples */
   uint32_t idx = 0;
   for (Line *l = list->lines; l; l = l->next){
     Point *p = l->points;
@@ -138,6 +144,7 @@ void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
     }
   }
   
+  /* create compensation dots if needed for ac-coupled outputs */
   if (dp->ac_coupling){
     float dx, dy;
     if (fabsf(dp->sumx) > fabs(dp->sumy)){
@@ -206,6 +213,8 @@ void InitDisplay(display_params_t *dp)
   }
   dp->active_idx = 0;
   dp->swap_flag = 0;
+  dp->total_frames = 0;
+  clock_gettime(CLOCK_REALTIME, &dp->start_time);
 
   dp->sumx = 0.f;
   dp->sumy = 0.f;
@@ -218,6 +227,18 @@ void InitDisplay(display_params_t *dp)
     fprintf(stderr, "Error: pthread_create() failed, returning: %d\n", ret);
     exit(EXIT_FAILURE);
   }
+}
+
+float GetDisplayFPS(display_params_t *dp)
+{
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  double dt = (now.tv_sec - dp->start_time.tv_sec + 
+               1e-9*(now.tv_nsec - dp->start_time.tv_nsec));
+  float fps = dp->total_frames / dt;
+  dp->start_time = now;
+  dp->total_frames = 0;
+  return fps;
 }
 
 void CloseDisplay(display_params_t *dp)
