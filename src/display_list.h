@@ -7,10 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ERROR(...) {fprintf(stderr, "Error (line %d, file %s): ", __LINE__, __FILE__);\
-                             fprintf(stderr, __VA_ARGS__);\
-                             fprintf(stderr, "\n");\
-                             exit(EXIT_FAILURE);}
+#define ERROR(...) {fprintf(stderr, "Error (line %d, file %s): ",\
+                            __LINE__, __FILE__);                 \
+    fprintf(stderr, __VA_ARGS__);                                \
+    fprintf(stderr, "\n");                                       \
+    exit(EXIT_FAILURE);}
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

@@ -8,11 +8,11 @@
 
 void* display_loop(void *p)
 {
-  display_params_t *display_params = (display_params_t*)p;
+  display_params_t *dp = (display_params_t*)p;
   
   /* setup for polling pcm status */
   struct pollfd *fds;
-  int count = snd_pcm_poll_descriptors_count(display_params->pcm_handle);
+  int count = snd_pcm_poll_descriptors_count(dp->pcm_handle);
   if (count < 0){
     ERROR("snd_pcm_poll_descriptors_count() returned %d", count);
   }
@@ -20,7 +20,7 @@ void* display_loop(void *p)
   if (NULL == fds){
     ERROR("malloc() failed");
   }
-  int err = snd_pcm_poll_descriptors(display_params->pcm_handle, fds, count);
+  int err = snd_pcm_poll_descriptors(dp->pcm_handle, fds, count);
   if (err < 0){
     ERROR("snd_pcm_poll_descriptors() failed: %s", snd_strerror(err));
   }
@@ -28,28 +28,29 @@ void* display_loop(void *p)
   while(1){
     fprintf(stderr, ".");
 
-    pthread_mutex_lock(&display_params->update_mutex);
-    if (display_params->swap_flag){
-      display_params->active_idx = (display_params->active_idx + 1) % 2;
-      display_params->swap_flag = 0;
+    pthread_mutex_lock(&dp->update_mutex);
+    if (dp->swap_flag){
+      dp->active_idx = (dp->active_idx + 1) % 2;
+      dp->swap_flag = 0;
     }
-    pthread_mutex_unlock(&display_params->update_mutex);
+    pthread_mutex_unlock(&dp->update_mutex);
 
-    snd_pcm_sframes_t samples; /* called frames in ALSA, but samples here to avoid confusion */
-    samples = snd_pcm_writei(display_params->pcm_handle,
-                             display_params->buffer[display_params->active_idx].buffer,
-                             display_params->buffer[display_params->active_idx].data_len);
+    /* called frames in ALSA, but samples here to avoid confusion */
+    snd_pcm_sframes_t samples;
+    samples = snd_pcm_writei(dp->pcm_handle,
+                             dp->buffer[dp->active_idx].buffer,
+                             dp->buffer[dp->active_idx].data_len);
     if (samples < 0){
-      samples = snd_pcm_recover(display_params->pcm_handle, samples, 0);
+      samples = snd_pcm_recover(dp->pcm_handle, samples, 0);
       if (samples < 0){
         ERROR("snd_pcm_writei() failed");
       }
     }
-    if (samples > 0 && samples < display_params->buffer[display_params->active_idx].data_len){
+    if (samples > 0 && samples < dp->buffer[dp->active_idx].data_len){
       ERROR("short write in snd_pcm_writei()");
     }
 
-    if (snd_pcm_state(display_params->pcm_handle) != SND_PCM_STATE_RUNNING){
+    if (snd_pcm_state(dp->pcm_handle) != SND_PCM_STATE_RUNNING){
       continue;
     }
 
@@ -57,7 +58,7 @@ void* display_loop(void *p)
     while(1){
       poll(fds, count, -1);
       unsigned short revents;
-      snd_pcm_poll_descriptors_revents(display_params->pcm_handle, fds, count, &revents);
+      snd_pcm_poll_descriptors_revents(dp->pcm_handle, fds, count, &revents);
       if (revents & POLLERR){
         ERROR("poll error");
       }
@@ -68,25 +69,25 @@ void* display_loop(void *p)
   }
 }
 
-void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limit_fps)
+void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
 {
   if (limit_fps){
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
-    if (display_params->next_frame_time.tv_sec > now.tv_sec ||
-        display_params->next_frame_time.tv_nsec > now.tv_nsec){
+    if (dp->next_frame_time.tv_sec > now.tv_sec ||
+        dp->next_frame_time.tv_nsec > now.tv_nsec){
       struct timespec delay;
-      if (now.tv_nsec > display_params->next_frame_time.tv_nsec){
-        delay.tv_nsec =  1000000000 + display_params->next_frame_time.tv_nsec - now.tv_nsec;
-        delay.tv_sec = display_params->next_frame_time.tv_sec - now.tv_sec - 1;
+      if (now.tv_nsec > dp->next_frame_time.tv_nsec){
+        delay.tv_nsec =  1000000000 + dp->next_frame_time.tv_nsec - now.tv_nsec;
+        delay.tv_sec = dp->next_frame_time.tv_sec - now.tv_sec - 1;
       } else {
-        delay.tv_nsec = display_params->next_frame_time.tv_nsec - now.tv_nsec;
-        delay.tv_sec = display_params->next_frame_time.tv_sec - now.tv_sec;
+        delay.tv_nsec = dp->next_frame_time.tv_nsec - now.tv_nsec;
+        delay.tv_sec = dp->next_frame_time.tv_sec - now.tv_sec;
       }
       nanosleep(&delay, NULL);
     }
     clock_gettime(CLOCK_REALTIME, &now);
-    double period = 1./display_params->frame_rate;
+    double period = 1./dp->frame_rate;
     time_t sec = floor(period);
     long nsec = 1.e9 * (period - sec) + now.tv_nsec;
     if (nsec > 999999999){
@@ -94,15 +95,15 @@ void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limi
       sec++;
     }
     sec += now.tv_sec;
-    display_params->next_frame_time.tv_sec = sec;
-    display_params->next_frame_time.tv_nsec = nsec;
+    dp->next_frame_time.tv_sec = sec;
+    dp->next_frame_time.tv_nsec = nsec;
   }
 
   /* overwrite undisplayed frame if updating too fast */
-  pthread_mutex_lock(&display_params->update_mutex);
-  display_params->swap_flag = 0;
-  int buf_idx = display_params->active_idx;
-  pthread_mutex_unlock(&display_params->update_mutex);
+  pthread_mutex_lock(&dp->update_mutex);
+  dp->swap_flag = 0;
+  int buf_idx = dp->active_idx;
+  pthread_mutex_unlock(&dp->update_mutex);
 
   uint32_t idx = 0;
   for (Line *l = list->lines; l; l = l->next){
@@ -112,20 +113,21 @@ void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limi
     float oldy = p->y;
     while (p){
       float d = sqrt((oldx - p->x)*(oldx - p->x) + (oldy - p->y)*(oldy - p->y));
-      int n_pts = MAX(2, (int) display_params->slew*d);
+      int n_pts = MAX(2, (int) dp->slew*d);
       for (int i=0; i < n_pts; ++i){
         float x = oldx + (p->x - oldx)*((float)i)/n_pts;
         float y = oldy + (p->y - oldy)*((float)i)/n_pts;
-        display_params->sumx += x;
-        display_params->sumy += y;
-        display_params->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(x, -1., 1.);
-        display_params->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(y, -1., 1.);
+        dp->sumx += x;
+        dp->sumy += y;
+        dp->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(x, -1., 1.);
+        dp->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(y, -1., 1.);
         idx++;
-        if (2*idx > display_params->buffer[buf_idx].buffer_len){
-          display_params->buffer[buf_idx].buffer_len *= 2;
-          display_params->buffer[buf_idx].buffer = (int16_t*) realloc(display_params->buffer[buf_idx].buffer,
-                                                                      2*display_params->buffer[buf_idx].buffer_len);
-          if (!display_params->buffer[buf_idx].buffer){
+        if (2*idx > dp->buffer[buf_idx].buffer_len){
+          dp->buffer[buf_idx].buffer_len *= 2;
+          dp->buffer[buf_idx].buffer = (int16_t*)
+            realloc(dp->buffer[buf_idx].buffer,
+                    2*dp->buffer[buf_idx].buffer_len);
+          if (!dp->buffer[buf_idx].buffer){
             ERROR("realloc() failed");
           }
         }
@@ -136,55 +138,57 @@ void UpdateDisplay(display_params_t *display_params, DisplayList *list, int limi
     }
   }
   
-  if (display_params->ac_coupling){
+  if (dp->ac_coupling){
     float dx, dy;
-    if (fabsf(display_params->sumx) > fabs(display_params->sumy)){
-      dx = copysign(1.f, display_params->sumx);
-      dy = copysign(fabs(display_params->sumy/display_params->sumx), display_params->sumy);
+    if (fabsf(dp->sumx) > fabs(dp->sumy)){
+      dx = copysign(1.f, dp->sumx);
+      dy = copysign(fabs(dp->sumy/dp->sumx), dp->sumy);
     } else {
-      dx = copysign(fabs(display_params->sumx/display_params->sumy), display_params->sumx);
-      dy = copysign(1.f, display_params->sumy);
+      dx = copysign(fabs(dp->sumx/dp->sumy), dp->sumx);
+      dy = copysign(1.f, dp->sumy);
     }
-    int n_pts = floor(MAX(fabsf(display_params->sumx), fabsf(display_params->sumy)));
+    int n_pts = floor(MAX(fabsf(dp->sumx), fabsf(dp->sumy)));
     for (int i = 0; i < n_pts; ++i){
-      display_params->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(-dx, -1., 1.);
-      display_params->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(-dy, -1., 1.);
+      dp->buffer[buf_idx].buffer[2*idx+0] = 32767. * CLAMP(-dx, -1., 1.);
+      dp->buffer[buf_idx].buffer[2*idx+1] = 32767. * CLAMP(-dy, -1., 1.);
       idx++;
-      if (2*idx > display_params->buffer[buf_idx].buffer_len){
-        display_params->buffer[buf_idx].buffer_len *= 2;
-        display_params->buffer[buf_idx].buffer = (int16_t*) realloc(display_params->buffer[buf_idx].buffer,
-                                                                    2*display_params->buffer[buf_idx].buffer_len);
-        if (!display_params->buffer[buf_idx].buffer){
+      if (2*idx > dp->buffer[buf_idx].buffer_len){
+        dp->buffer[buf_idx].buffer_len *= 2;
+        dp->buffer[buf_idx].buffer = (int16_t*)
+          realloc(dp->buffer[buf_idx].buffer,
+                  2*dp->buffer[buf_idx].buffer_len);
+        if (!dp->buffer[buf_idx].buffer){
           ERROR("realloc() failed");
         }
       }
-      display_params->sumx -= dx;
-      display_params->sumy -= dy;
+      dp->sumx -= dx;
+      dp->sumy -= dy;
     }
   }
 
-  display_params->buffer[buf_idx].data_len = idx;
+  dp->buffer[buf_idx].data_len = idx;
 
   /* flag buffer swap after current refresh */
-  pthread_mutex_lock(&display_params->update_mutex);
-  display_params->swap_flag = 1;
-  pthread_mutex_unlock(&display_params->update_mutex);
+  pthread_mutex_lock(&dp->update_mutex);
+  dp->swap_flag = 1;
+  pthread_mutex_unlock(&dp->update_mutex);
 }
 
-void InitDisplay(display_params_t *display_params)
+void InitDisplay(display_params_t *dp)
 {
   int err;
-  err = snd_pcm_open(&display_params->pcm_handle, display_params->pcm_device, SND_PCM_STREAM_PLAYBACK, 0);
+  err = snd_pcm_open(&dp->pcm_handle, dp->pcm_device,
+                     SND_PCM_STREAM_PLAYBACK, 0);
   if (err < 0){
     ERROR("snd_pcm_open() failed");
   }
 
-  uint32_t latency_usec = (int)1000000./display_params->frame_rate;
-  err = snd_pcm_set_params(display_params->pcm_handle,
+  uint32_t latency_usec = (int)1000000./dp->frame_rate;
+  err = snd_pcm_set_params(dp->pcm_handle,
                            SND_PCM_FORMAT_S16,
                            SND_PCM_ACCESS_RW_INTERLEAVED,
                            2,
-                           display_params->sample_rate,
+                           dp->sample_rate,
                            0,
                            latency_usec);
   if (err < 0){
@@ -193,32 +197,32 @@ void InitDisplay(display_params_t *display_params)
 
   /* first guess at buffer: will be expanded as needed */
   for (int i = 0; i < 2; ++i){
-    display_params->buffer[i].buffer_len = (int)(display_params->sample_rate / display_params->frame_rate);
-    display_params->buffer[i].buffer = (int16_t*)malloc(2*display_params->buffer[i].buffer_len);
-    if (NULL == display_params->buffer[i].buffer){
+    dp->buffer[i].buffer_len = (int)(dp->sample_rate / dp->frame_rate);
+    dp->buffer[i].buffer = (int16_t*)malloc(2*dp->buffer[i].buffer_len);
+    if (NULL == dp->buffer[i].buffer){
       ERROR("malloc() failed");
     }
-    display_params->buffer[i].data_len = 0;
+    dp->buffer[i].data_len = 0;
   }
-  display_params->active_idx = 0;
-  display_params->swap_flag = 0;
+  dp->active_idx = 0;
+  dp->swap_flag = 0;
 
-  display_params->sumx = 0.f;
-  display_params->sumy = 0.f;
+  dp->sumx = 0.f;
+  dp->sumy = 0.f;
 
-  clock_gettime(CLOCK_REALTIME, &display_params->next_frame_time);
+  clock_gettime(CLOCK_REALTIME, &dp->next_frame_time);
 
-  pthread_mutex_init(&display_params->update_mutex, NULL);
-  int ret = pthread_create(&display_params->thread, NULL, display_loop, (void*)display_params);
+  pthread_mutex_init(&dp->update_mutex, NULL);
+  int ret = pthread_create(&dp->thread, NULL, display_loop, (void*)dp);
   if (ret){
     fprintf(stderr, "Error: pthread_create() failed, returning: %d\n", ret);
     exit(EXIT_FAILURE);
   }
 }
 
-void CloseDisplay(display_params_t *display_params)
+void CloseDisplay(display_params_t *dp)
 {
-  snd_pcm_close(display_params->pcm_handle);
-  pthread_cancel(display_params->thread);
-  pthread_join(display_params->thread, NULL);
+  snd_pcm_close(dp->pcm_handle);
+  pthread_cancel(dp->thread);
+  pthread_join(dp->thread, NULL);
 }
