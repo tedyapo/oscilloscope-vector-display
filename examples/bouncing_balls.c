@@ -135,6 +135,12 @@ void update_positions(ball* balls, int n_balls, float dt)
         float via = ((mi-mj)*vib+2*mj*vjb)/(mi+mj);
         float vja = ((mj-mi)*vjb +2*mi*vib)/(mi+mj);
 
+        /* reverse positions to interaction time */
+        balls[i].cx += t * balls[i].vx;
+        balls[i].cy += t * balls[i].vy;
+        balls[j].cx += t * balls[j].vx;
+        balls[j].cy += t * balls[j].vy;
+
         /* updated velocities */
         balls[i].vx += via*ax - vib*ax;
         balls[i].vy += via*ay - vib*ay;
@@ -162,7 +168,7 @@ int main()
   display_params.frame_rate = 60;
   display_params.sample_rate = 48000;
   display_params.slew = 10;
-  display_params.ac_coupling = 1;
+  display_params.ac_coupling = 0;
   InitDisplay(&display_params);
 
   const int n_balls = 10;
