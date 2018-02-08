@@ -26,3 +26,5 @@ __Running Example__
 connect L and R audio outputs to X- and Y- inputs of oscilloscope
 
 ./bouncing_balls
+
+![example image](/doc/images/DS1054Z.jpg)
