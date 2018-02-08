@@ -3,7 +3,7 @@ Experimental vector display on oscilloscope using soundcard audio output
 
 __Building Library__
 
-Install ALSA development package
+\#Install ALSA development package
 
 sudo apt-get install asound2-dev
 
