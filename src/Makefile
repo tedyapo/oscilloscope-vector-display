@@ -1,4 +1,13 @@
-all: test
+all: libavdisplay.a
 
-test: test.c display_list.c display.c
-	gcc -g -o $@ $^ -lpthread -lm -lasound
+LIBOBJS = display_list.o display.o 
+
+%.o : %.c %.h
+	gcc -c $< -o $@
+
+libavdisplay.a : ${LIBOBJS}
+	ar rcs $@ $^
+
+clean:
+	rm -f *.a *.o *~
+
