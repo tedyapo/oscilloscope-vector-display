@@ -10,21 +10,6 @@ void* display_loop(void *p)
 {
   display_params_t *dp = (display_params_t*)p;
   
-  /* setup for polling pcm status */
-  struct pollfd *fds;
-  int count = snd_pcm_poll_descriptors_count(dp->pcm_handle);
-  if (count < 0){
-    ERROR("snd_pcm_poll_descriptors_count() returned %d", count);
-  }
-  fds = (struct pollfd *) malloc(count * sizeof(struct pollfd));
-  if (NULL == fds){
-    ERROR("malloc() failed");
-  }
-  int err = snd_pcm_poll_descriptors(dp->pcm_handle, fds, count);
-  if (err < 0){
-    ERROR("snd_pcm_poll_descriptors() failed: %s", snd_strerror(err));
-  }
-
   while(1){
     dp->total_frames++;
 
@@ -50,23 +35,6 @@ void* display_loop(void *p)
       ptr += 2*samples;
       sample_count -= samples;
       if (0 == sample_count){
-        break;
-      }
-    }
-
-    if (snd_pcm_state(dp->pcm_handle) != SND_PCM_STATE_RUNNING){
-      continue;
-    }
-
-    /* poll until ready for more data */
-    while(1){
-      poll(fds, count, -1);
-      unsigned short revents;
-      snd_pcm_poll_descriptors_revents(dp->pcm_handle, fds, count, &revents);
-      if (revents & POLLERR){
-        ERROR("poll error");
-      }
-      if (revents & POLLOUT){
         break;
       }
     }
