@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
 #include <pthread.h>
 #include <math.h>
 #include "display.h"
@@ -149,8 +151,30 @@ void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
   pthread_mutex_unlock(&dp->update_mutex);
 }
 
-void InitDisplay(display_params_t *dp)
+void InitDisplay(display_params_t *dp, int argc, char* const argv[])
 {
+  /* parse command-line arguments */
+  struct option longopts[] = 
+    {
+      {"help", 0, NULL, 'h'},
+      {"device", 1, NULL, 'D'},
+      {NULL, 0, NULL, 0}
+    };
+  int opt;
+  while ((opt = getopt_long(argc, argv, "hD:", longopts, NULL)) != -1){
+    switch(opt){
+    case 'h':
+      fprintf(stderr, "Usage: %s [OPTION]\n\n", argv[0]);
+      fprintf(stderr, " -h, --help             help\n");
+      fprintf(stderr, " -D, --device=NAME      select PCM device\n");
+      exit(EXIT_FAILURE);
+      break;
+    case 'D':
+      dp->pcm_device = strdup(optarg);
+      break;
+    }
+  }
+
   int err;
   err = snd_pcm_open(&dp->pcm_handle, dp->pcm_device,
                      SND_PCM_STREAM_PLAYBACK, 0);

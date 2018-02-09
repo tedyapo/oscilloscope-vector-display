@@ -167,18 +167,17 @@ float total_energy(ball *balls, int n_balls)
   return E;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
   display_params_t display_params;
 
   /* set the display parameters and initialize the display */
-  /* display_params.pcm_device = "default"; */
-  display_params.pcm_device = "hw:CARD=Device,DEV=0";
+  display_params.pcm_device = "default";
   display_params.frame_rate = 60;
   display_params.sample_rate = 48000;
   display_params.slew = 10;
   display_params.ac_coupling = 0;
-  InitDisplay(&display_params);
+  InitDisplay(&display_params, argc, argv);
 
   const int n_balls = 10;
   ball balls[n_balls];
