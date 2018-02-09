@@ -89,7 +89,7 @@ void UpdateDisplay(display_params_t *dp, DisplayList *list, int limit_fps)
     float oldy = p->y;
     while (p){
       float d = sqrt((oldx - p->x)*(oldx - p->x) + (oldy - p->y)*(oldy - p->y));
-      int n_pts = MAX(2, (int) dp->slew*d);
+      int n_pts = MAX(1, (int) dp->slew*d);
       for (int i=0; i < n_pts; ++i){
         float x = oldx + (p->x - oldx)*((float)i)/n_pts;
         float y = oldy + (p->y - oldy)*((float)i)/n_pts;
