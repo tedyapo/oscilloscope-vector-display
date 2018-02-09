@@ -39,7 +39,8 @@ typedef struct
 } display_params_t;
 
 void *display_loop(void *p);
-void InitDisplay(display_params_t *display_params);
+void InitDisplay(display_params_t *display_params,
+                 int argc, char* const argv[]);
 void UpdateDisplay(display_params_t *display_params, DisplayList *list,
                    int limit_fps);
 void CloseDisplay(display_params_t *display_params);
