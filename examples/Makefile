@@ -7,8 +7,11 @@ INCPATH = ../src/
 LIBPATH = ../src/
 LIBS =  -lavdisplay -lpthread -lm -lasound
 
-bouncing_balls: bouncing_balls.c 
-	gcc ${CFLAGS} -o $@ $^ -I ${INCPATH} -L ${LIBPATH} ${LIBS}
+AVDISPLAYLIB:
+	cd ../src && ${MAKE}
+
+bouncing_balls: bouncing_balls.c AVDISPLAYLIB
+	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
 
 clean:
 	rm -f *.o ${TARGETS} *~
