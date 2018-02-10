@@ -1,4 +1,4 @@
-TARGETS = bouncing_balls impulse_response
+TARGETS = bouncing_balls impulse_response wrencher
 
 all: ${TARGETS}
 
@@ -15,6 +15,10 @@ bouncing_balls: bouncing_balls.c AVDISPLAYLIB
 
 impulse_response: impulse_response.c AVDISPLAYLIB
 	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
+
+wrencher: wrencher.c AVDISPLAYLIB
+	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
+
 
 clean:
 	rm -f *.o ${TARGETS} *~
