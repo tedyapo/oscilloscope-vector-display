@@ -110,15 +110,15 @@ void update_positions(ball* balls, int n_balls, float dt)
         t = t1;
       }
         
-      /* find (previous) positions at interaction time */
-      float xi = balls[i].cx + t * balls[i].vx;
-      float yi = balls[i].cy + t * balls[i].vy;
-      float xj = balls[j].cx + t * balls[j].vx;
-      float yj = balls[j].cy + t * balls[j].vy;
+      /* reverse positions to interaction time */
+      balls[i].cx += t * balls[i].vx;
+      balls[i].cy += t * balls[i].vy;
+      balls[j].cx += t * balls[j].vx;
+      balls[j].cy += t * balls[j].vy;
 
       /* find unit vector between centers */
-      float ax = xi - xj;
-      float ay = yi - yj;
+      float ax = balls[i].cx - balls[j].cx;
+      float ay = balls[i].cy - balls[j].cy;
       float l = sqrt(ax*ax + ay*ay);
       ax /= l;
       ay /= l;
@@ -134,12 +134,6 @@ void update_positions(ball* balls, int n_balls, float dt)
       /* axial velocity after collison */
       float via = ((mi-mj)*vib+2*mj*vjb)/(mi+mj);
       float vja = ((mj-mi)*vjb +2*mi*vib)/(mi+mj);
-
-      /* reverse positions to interaction time */
-      balls[i].cx += t * balls[i].vx;
-      balls[i].cy += t * balls[i].vy;
-      balls[j].cx += t * balls[j].vx;
-      balls[j].cy += t * balls[j].vy;
 
       /* updated velocities */
       balls[i].vx += via*ax - vib*ax;
