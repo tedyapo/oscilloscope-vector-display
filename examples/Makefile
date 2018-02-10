@@ -1,4 +1,4 @@
-TARGETS = bouncing_balls impulse_response wrencher
+TARGETS = bouncing_balls impulse_response wrencher platonic_solids
 
 all: ${TARGETS}
 
@@ -17,6 +17,9 @@ impulse_response: impulse_response.c AVDISPLAYLIB
 	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
 
 wrencher: wrencher.c AVDISPLAYLIB
+	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
+
+platonic_solids: platonic_solids.c AVDISPLAYLIB
 	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
 
 
