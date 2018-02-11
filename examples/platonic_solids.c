@@ -299,6 +299,7 @@ int main(int argc, char *argv[])
 
   uint32_t update_count = 0;
   uint32_t bounce_count = 0;
+  float fps = 0.f;
   while(1){
 
     /* initialize a display list */
@@ -361,6 +362,10 @@ int main(int argc, char *argv[])
 
     render_polyhedron(&dl, &polyhedra[type_idx], &pos, r, &angle, &viewpoint);
 
+    char message[20];
+    snprintf(message, 20, "%4.1f FPS", fps);
+    render_text(&dl, message, -1.f, -1.f, 0.3, 0.1, 0.2);
+
     /* update the display, and free the display list */
     int limit_fps = 1;
     UpdateDisplay(&display_params, &dl, limit_fps);
@@ -368,9 +373,10 @@ int main(int argc, char *argv[])
 
     /* periodically print the display drawing rate */
     update_count++;
-    if (!(update_count % 32)){
-      fprintf(stderr, "%4.1f fps\n",
-              GetDisplayFPS(&display_params));
+    if (!(update_count % 64)){
+      fps = GetDisplayFPS(&display_params);
+      fprintf(stderr, "%4.1f fps\n", fps);
+              
     }
   }
 
