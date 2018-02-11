@@ -8,6 +8,7 @@
 #include <time.h>
 #include <alsa/asoundlib.h>
 #include "display_list.h"
+#include "display_text.h"
 
 typedef struct
 {

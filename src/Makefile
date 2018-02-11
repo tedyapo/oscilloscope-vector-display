@@ -1,6 +1,6 @@
 all: libavdisplay.a
 
-LIBOBJS = display_list.o display.o 
+LIBOBJS = display_list.o display.o display_text.o
 
 %.o : %.c %.h
 	gcc -c $< -o $@
