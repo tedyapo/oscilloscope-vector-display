@@ -7,9 +7,9 @@ __Building Library__
 
 sudo apt-get install asound2-dev
 
-git clone https://github.com/tedyapo/oscillosope-vector-display.git
+git clone https://github.com/tedyapo/oscilloscope-vector-display.git
 
-cd oscillosope-vector-display
+cd oscilloscope-vector-display
 
 cd src
 
