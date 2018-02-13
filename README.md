@@ -1,6 +1,8 @@
 # oscilloscope-vector-display
 Experimental vector display on oscilloscope using soundcard audio output
 
+See [hackaday.io project page](https://hackaday.io/project/47192-oscilloscope-vector-game-display) for more details
+
 __Building Library__
 
 \# Install ALSA development package
