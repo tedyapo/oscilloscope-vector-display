@@ -9,6 +9,7 @@
 #include <alsa/asoundlib.h>
 #include "display_list.h"
 #include "display_text.h"
+#include "dlo.h"
 
 typedef struct
 {

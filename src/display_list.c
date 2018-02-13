@@ -55,6 +55,7 @@ Line* NewLine()
   if (free_lines){
     Line* temp = free_lines;
     free_lines = free_lines->next;
+    temp->slew = -1;
     temp->points = NULL;
     temp->next = NULL;
     return temp;
@@ -63,6 +64,7 @@ Line* NewLine()
     if (NULL == temp){
       ERROR("malloc() failed");
     }
+    temp->slew = -1;
     temp->points = NULL;
     temp->next = NULL;
     return temp;
