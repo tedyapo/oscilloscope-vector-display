@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
 
     char message[20];
     snprintf(message, 20, "%4.1f FPS", fps);
-    render_text(&dl, message, -1.f, -1.f, 0.3, 0.1, 0.2);
+    render_text(&dl, message, -1.f, -1.f, 0.3, 0.1, 0.2, 20);
 
     /* update the display, and free the display list */
     int limit_fps = 1;

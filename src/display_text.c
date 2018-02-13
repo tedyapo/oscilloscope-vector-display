@@ -16,9 +16,10 @@ int charS[11] = {11, 2, 2, 1, 0, 3, 4, 5, 8, 7, 6};
 int charPeriod[9] = {9, 7, 7, 7, 7, 7, 7, 7, 7};
 
 void draw_glyph(DisplayList *dl, float xc, float yc,
-                float *xp, float *yp, int *pts)
+                float *xp, float *yp, int *pts, float slew)
 {
   Line *l = NewLine();
+  l->slew = slew;
   float oldx;
   float oldy;
   for (int i = 1; i < pts[0]; ++i){
@@ -31,7 +32,7 @@ void draw_glyph(DisplayList *dl, float xc, float yc,
 }
 
 void render_text(DisplayList *dl, const char* text, float x, float y,
-                 float height, float width, float spacing)
+                 float height, float width, float spacing, float slew)
 {
 
   /* calculate point array
@@ -54,46 +55,46 @@ void render_text(DisplayList *dl, const char* text, float x, float y,
   for (const char *c = text; *c; ++c){
     switch (*c){
       case '0':
-        draw_glyph(dl, x, y, px, py, char0);
+        draw_glyph(dl, x, y, px, py, char0, slew);
         break;
       case '1':
-        draw_glyph(dl, x, y, px, py, char1);
+        draw_glyph(dl, x, y, px, py, char1, slew);
         break;
       case '2':
-        draw_glyph(dl, x, y, px, py, char2);
+        draw_glyph(dl, x, y, px, py, char2, slew);
         break;
       case '3':
-        draw_glyph(dl, x, y, px, py, char3);
+        draw_glyph(dl, x, y, px, py, char3, slew);
         break;
       case '4':
-        draw_glyph(dl, x, y, px, py, char4);
+        draw_glyph(dl, x, y, px, py, char4, slew);
         break;
       case '5':
-        draw_glyph(dl, x, y, px, py, char5);
+        draw_glyph(dl, x, y, px, py, char5, slew);
         break;
       case '6':
-        draw_glyph(dl, x, y, px, py, char6);
+        draw_glyph(dl, x, y, px, py, char6, slew);
         break;
       case '7':
-        draw_glyph(dl, x, y, px, py, char7);
+        draw_glyph(dl, x, y, px, py, char7, slew);
         break;
       case '8':
-        draw_glyph(dl, x, y, px, py, char8);
+        draw_glyph(dl, x, y, px, py, char8, slew);
         break;
       case '9':
-        draw_glyph(dl, x, y, px, py, char9);
+        draw_glyph(dl, x, y, px, py, char9, slew);
         break;
       case 'F':
-        draw_glyph(dl, x, y, px, py, charF);
+        draw_glyph(dl, x, y, px, py, charF, slew);
         break;
       case 'P':
-        draw_glyph(dl, x, y, px, py, charP);
+        draw_glyph(dl, x, y, px, py, charP, slew);
         break;
       case 'S':
-        draw_glyph(dl, x, y, px, py, charS);
+        draw_glyph(dl, x, y, px, py, charS, slew);
         break;
       case '.':
-        draw_glyph(dl, x, y, px, py, charPeriod);
+        draw_glyph(dl, x, y, px, py, charPeriod, slew);
         break;
       case ' ':
         x += spacing;

@@ -35,6 +35,7 @@ void KillPoint(Point *p);
 
 typedef struct Line_
 {
+  float slew;
   Point *points;
   struct Line_ *next;
 } Line;

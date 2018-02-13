@@ -1,4 +1,4 @@
-TARGETS = bouncing_balls impulse_response wrencher platonic_solids render_text
+TARGETS = bouncing_balls impulse_response wrencher platonic_solids astro
 
 all: ${TARGETS}
 
@@ -24,6 +24,9 @@ platonic_solids: platonic_solids.c AVDISPLAYLIB
 
 render_text: render_text.c AVDISPLAYLIB
 	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS}
+
+astro: astro.c AVDISPLAYLIB
+	gcc ${CFLAGS} -o $@ $< -I ${INCPATH} -L ${LIBPATH} ${LIBS} -lSDL2
 
 
 clean:
